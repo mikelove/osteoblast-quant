@@ -31,17 +31,16 @@ rule fastqc:
     input:
         "fastq/{sample}_ALL.fastq.gz"
     output:
-        "qc/{sample}/{sample}_fastqc.html"
+        "qc/{sample}/{sample}_ALL_fastqc.html"
     params:
         dir = "qc/{sample}"
     shell:
-        "mkdir {params.dir}; "
-        "fastqc --outdir {params.dir} {input}"
+        "fastqc --quiet -t 12 --outdir {params.dir} {input}"
 
 rule multiqc:
     input:
         expand(["ref_quants/{run}/quant.sf",
-                "qc/{run}_{read}/{run}_{read}_fastqc.html"],
+                "qc/{run}_{read}/{run}_{read}_ALL_fastqc.html"],
                run=RUNS, read=READS)
     output:
         "multiqc/multiqc_report.html"
