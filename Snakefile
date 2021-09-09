@@ -1,0 +1,49 @@
+RUNS, = glob_wildcards("fastq/{run}_R1_ALL.fastq.gz")
+
+READS = ["R1", "R2"]
+
+SALMON = "/proj/milovelab/bin/salmon-1.5.2_linux_x86_64/bin/salmon"
+
+ANNO = "/proj/milovelab/anno"
+
+rule all:
+    input: "multiqc/multiqc_report.html"
+
+rule salmon_index:
+    input: "{ANNO}/Mus_musculus.GRCm38.v102.fa.gz"
+    output: directory("{ANNO}/Mus_musculus.GRCm38.v102-salmon_1.5.2")
+    shell: "{SALMON} index -p 12 -t {input} -i {output}"
+
+rule salmon_quant_ref:
+    input:
+        r1 = "fastq/{sample}_R1_ALL.fastq.gz",
+        r2 = "fastq/{sample}_R2_ALL.fastq.gz",
+        index = "/proj/milovelab/anno/Mus_musculus.GRCm38.v102-salmon_1.5.2"
+    output:
+        "ref_quants/{sample}/quant.sf"
+    params:
+        dir = "ref_quants/{sample}"
+    shell:
+        "{SALMON} quant -i {input.index} -l A -p 12 "
+        "-o {params.dir} -1 {input.r1} -2 {input.r2}"
+
+rule fastqc:
+    input:
+        "fastq/{sample}_ALL.fastq.gz"
+    output:
+        "qc/{sample}/{sample}_fastqc.html"
+    params:
+        dir = "qc/{sample}"
+    shell:
+        "mkdir {params.dir}; "
+        "fastqc --outdir {params.dir} {input}"
+
+rule multiqc:
+    input:
+        expand(["ref_quants/{run}/quant.sf",
+                "qc/{run}_{read}/{run}_{read}_fastqc.html"],
+               run=RUNS, read=READS)
+    output:
+        "multiqc/multiqc_report.html"
+    shell:
+        "multiqc . -o multiqc"
