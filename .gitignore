@@ -1,0 +1,8 @@
+.snakemake
+diploid_txomes
+ensembl_txomes
+fastq
+genes
+multiqc
+qc
+ref_quants
