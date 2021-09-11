@@ -1,0 +1,10 @@
+configfile: "config.json"
+
+rule all:
+    input:
+        expand("snps/{strain}.vci", strain=config["strain"])
+
+rule vcf2vci:
+    input: "snps/{file}.mgp.v5.indels.dbSNP142.normed.vcf.gz"
+    output: "snps/{file}.vci"
+    shell: "g2gtools vcf2vci -o {output} -s {wildcards.file} --haploid -p 8 {input}"
