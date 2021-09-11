@@ -2,9 +2,13 @@ configfile: "config.json"
 
 rule all:
     input:
-        expand("snps/{strain}.vci", strain=config["strain"])
+        expand("snps/{strain}.vci.gz", strain=config["strain"])
 
 rule vcf2vci:
-    input: "snps/{file}.mgp.v5.indels.dbSNP142.normed.vcf.gz"
-    output: "snps/{file}.vci"
-    shell: "g2gtools vcf2vci -o {output} -s {wildcards.file} --haploid -p 8 {input}"
+    input: 
+        vcf = "snps/{file}.mgp.v5.indels.dbSNP142.normed.vcf.gz",
+        fasta = "fasta/Mus_musculus.GRCm38.dna.primary_assembly_bgzip.fa.gz"
+    output: "snps/{file}.vci.gz"
+    shell: 
+        "g2gtools vcf2vci -p 8 -i {input.vcf} -o {output} "
+        "-s {wildcards.file} -f {input.fasta}"
