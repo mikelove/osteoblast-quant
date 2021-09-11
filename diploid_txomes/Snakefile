@@ -2,13 +2,31 @@ configfile: "config.json"
 
 rule all:
     input:
-        expand("snps/{strain}.vci.gz", strain=config["strain"])
+        expand("fasta/{strain}.trans.fa", strain=config["strain"])
 
 rule vcf2vci:
     input: 
         vcf = "snps/{file}.mgp.v5.indels.dbSNP142.normed.vcf.gz",
         fasta = "fasta/Mus_musculus.GRCm38.dna.primary_assembly_bgzip.fa.gz"
     output: "snps/{file}.vci.gz"
+    params: 
+        vci = "snps/{file}.vci"
     shell: 
-        "g2gtools vcf2vci -p 8 -i {input.vcf} -o {output} "
+        "g2gtools vcf2vci -p 8 -i {input.vcf} -o {params.vci} "
         "-s {wildcards.file} -f {input.fasta}"
+
+rule patch:
+    input:
+        vci = "snps/{file}.vci.gz",
+        fasta = "fasta/Mus_musculus.GRCm38.dna.primary_assembly_bgzip.fa.gz"
+    output: "fasta/{file}.patched.fa"
+    shell:
+        "g2gtools patch -p 8 -i {input.fasta} -c {input.vci} -o {output}"
+
+rule transform:
+    input:
+        vci = "snps/{file}.vci.gz",
+        fasta = "fasta/{file}.patched.fa"
+    output: "fasta/{file}.trans.fa"
+    shell:
+        "g2gtools transform -p 8 -i {input.fasta} -c {input.vci} -o {output}"
