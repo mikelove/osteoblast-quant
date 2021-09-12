@@ -2,7 +2,7 @@ configfile: "config.json"
 
 rule all:
     input:
-        expand("fasta/{strain}.trans.fa", strain=config["strain"])
+        expand("txps/{strain}.transcripts.fa", strain=config["strain"])
 
 rule vcf2vci:
     input: 
@@ -30,3 +30,25 @@ rule transform:
     output: "fasta/{file}.trans.fa"
     shell:
         "g2gtools transform -p 8 -i {input.fasta} -c {input.vci} -o {output}"
+
+rule convert:
+    input:
+        vci = "snps/{file}.vci.gz",
+        gtf = "genes/Mus_musculus.GRCm38.102.gtf",
+    output: "genes/{file}.gtf"
+    shell:
+        "g2gtools convert -i {input.gtf} -c {input.vci} -o {output}"
+
+rule db:
+    input: "genes/{file}.gtf"
+    output: "genes/{file}.db"
+    shell:
+        "g2gtools gtf2db -i {input} -o {output}"
+
+rule txps:
+    input:
+        fasta = "fasta/{file}.trans.fa",
+        db = "genes/{file}.db"
+    output: "txps/{file}.transcripts.fa"
+    shell:
+        "g2gtools extract -i {input.fasta} -db {input.db} --transcripts > {output}"
