@@ -5,5 +5,7 @@ fastq
 genes
 multiqc
 qc
+quants
 ref_quants
 *.Rout
+*.out
