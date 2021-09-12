@@ -10,6 +10,6 @@ module load samtools
 zcat Mus_musculus.GRCm38.dna.primary_assembly.fa.gz | bgzip -c > Mus_musculus.GRCm38.dna.primary_assembly_bgzip.fa.gz
 samtools faidx Mus_musculus.GRCm38.dna.primary_assembly_bgzip.fa.gz
 
-
 # creating the standard mouse reference transcripts
 rsem-prepare-reference fasta/Mus_musculus.GRCm38.dna.primary_assembly.fa --gtf genes/Mus_musculus.GRCm38.102.gtf txps/Mus_musculus.GRCm38.102
+mv txps/Mus_musculus.GRCm38.102.transcripts.fa txps/Mus_musculus.GRCm38.102.fa

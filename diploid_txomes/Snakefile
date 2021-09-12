@@ -1,8 +1,10 @@
 configfile: "config.json"
 
+SALMON = "/proj/milovelab/bin/salmon-1.5.2_linux_x86_64/bin/salmon"
+
 rule all:
     input:
-        expand("txps/{strain}.transcripts.fa", strain=config["strain"])
+        expand("indices/{strain}/pos.bin", strain=config["strain"])
 
 rule vcf2vci:
     input: 
@@ -45,10 +47,35 @@ rule db:
     shell:
         "g2gtools gtf2db -i {input} -o {output}"
 
-rule txps:
+rule extract_txps:
     input:
         fasta = "fasta/{file}.trans.fa",
         db = "genes/{file}.db"
     output: "txps/{file}.transcripts.fa"
     shell:
         "g2gtools extract -i {input.fasta} -db {input.db} --transcripts > {output}"
+
+rule tag_ref_and_strain:
+    input: expand("txps/{strain}.transcripts.fa", strain=config["strain"])
+    output: 
+        ref = "txps/Mus_musculus.GRCm38.102.subset.fa",
+        strains = expand("txps/{strain}.tagged.fa", strain=config["strain"])
+    params:
+        ref = "txps/Mus_musculus.GRCm38.102.fa"
+    shell:
+        "R CMD BATCH --no-save --no-restore '--args {input} {params.ref}' rearrange_ensembl.R"
+
+rule make_diploid_fasta:
+    input:
+        ref = "txps/Mus_musculus.GRCm38.102.subset.fa",
+        strain = "{file}.tagged.fa"
+    output: "{file}.diploid.fa"
+    shell:
+        "cat {input.ref} {input.strain} > {output}"
+
+rule index_diploid_fasta:
+    input: "txps/{file}.diploid.fa"
+    output: "indices/{file}/pos.bin"
+    params:
+        dir = "indices/{file}"
+    shell: "{SALMON} index -p 8 -t {input} -i {params.dir} --keepDuplicates"
