@@ -1,0 +1,6 @@
+samples <- list.files("ref_quants")
+library(tximport)
+library(readr)
+files <- file.path("ref_quants", samples[1:5], "quant.sf")
+txi <- tximport(files, type="salmon", txOut=TRUE)
+colSums(txi$counts)
