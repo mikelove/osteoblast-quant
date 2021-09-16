@@ -1,6 +1,4 @@
 samples <- list.files("ref_quants")
-library(tximport)
-library(readr)
 files <- file.path("ref_quants", samples, "quant.sf")
 strain <- factor(rep(c("129xB6","CASTxB6"),each=27))
 day <- rep(rep(1:9 * 2, each=3), times=2)
