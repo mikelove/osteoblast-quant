@@ -1,38 +1,42 @@
 samples <- list.files("ref_quants")
 files <- file.path("ref_quants", samples, "quant.sf")
-strain <- factor(rep(c("129xB6","CASTxB6"),each=27))
+cross <- factor(rep(c("129xB6","CASTxB6"),each=27)) # cross
 day <- rep(rep(1:9 * 2, each=3), times=2)
-rep <- rep(1:3, times=54)
-names <- paste0(strain, "-", day, "-", rep)
-coldata <- data.frame(strain, day, files, names)
+rep <- rep(1:3, times=18)
+names <- paste0(cross, "-", day, "-", rep)
+coldata <- data.frame(cross, day, files, names)
 
 library(tximeta)
 se <- tximeta(coldata)
 gse <- summarizeToGene(se)
 
 suppressPackageStartupMessages(library(DESeq2))
-dds <- DESeqDataSet(gse, ~strain + day)
+dds <- DESeqDataSet(gse, ~cross + day)
 keep <- rowSums(counts(dds) >= 10) >= 6
 table(keep)
 dds <- dds[keep,]
-vsd <- vst(dds, blind=FALSE)
-plotPCA(vsd, intgroup="strain")
-plotPCA(vsd, intgroup="day")
+dds <- estimateSizeFactors(dds)
 
 library(org.Mm.eg.db)
 dds <- addIds(dds, "SYMBOL", gene=TRUE)
 
-dds_sub <- dds[!is.na(mcols(dds)$symbol),]
+save(dds, file="ref_dds_filtered.rda")
+
+vsd <- vst(dds, blind=FALSE)
+plotPCA(vsd, intgroup="cross")
+plotPCA(vsd, intgroup="day")
+
+dds_sub <- dds[!is.na(mcols(dds)$symbol),] # remove some genes
 rownames(dds_sub) <- mcols(dds_sub)$symbol
-plotCounts(dds_sub, "Runx2", intgroup="strain")
+plotCounts(dds_sub, "Runx2", intgroup="cross")
 
 library(ggplot2)
 plotGene <- function(gene) {
   suppressMessages({
-    dat <- plotCounts(dds_sub, gene, intgroup=c("strain", "day"), returnData=TRUE)
+    dat <- plotCounts(dds_sub, gene, intgroup=c("cross", "day"), returnData=TRUE)
   })
   maxcnt <- max(dat$count)
-  ggplot(dat, aes(day, count, color=strain, group=strain)) +
+  ggplot(dat, aes(day, count, color=cross, group=cross)) +
     geom_point() + stat_smooth(se=FALSE, method="loess", formula=y~x) +
     ggtitle(gene) + ylim(0,1.1*maxcnt) + ylab("scaled count")
 }

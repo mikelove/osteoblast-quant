@@ -9,3 +9,4 @@ quants
 ref_quants
 *.Rout
 *.out
+*.rda
