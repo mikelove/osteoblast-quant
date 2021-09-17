@@ -11,7 +11,8 @@ se <- tximeta(coldata)
 gse <- summarizeToGene(se)
 
 suppressPackageStartupMessages(library(DESeq2))
-dds <- DESeqDataSet(gse, ~cross + day)
+gse$day <- factor(gse$day)
+dds <- DESeqDataSet(gse, ~cross + cross:day)
 keep <- rowSums(counts(dds) >= 10) >= 6
 table(keep)
 dds <- dds[keep,]
@@ -20,7 +21,7 @@ dds <- estimateSizeFactors(dds)
 library(org.Mm.eg.db)
 dds <- addIds(dds, "SYMBOL", gene=TRUE)
 
-save(dds, file="ref_dds_filtered.rda")
+save(dds, file="data/ref_dds_filtered.rda")
 
 vsd <- vst(dds, blind=FALSE)
 plotPCA(vsd, intgroup="cross")
