@@ -24,4 +24,5 @@ gene <- "Runx2"
 ensgene <- rownames(y)[which(mcols(y)$symbol == gene)]
 
 # NOTE: this use of 'x' and 'cov' is not what you will use for inference
-plotInfReps(y, idx=ensgene, x="day", cov="allele", main=gene)
+plotInfReps(y, idx=ensgene, x="day", cov="allele",
+            main=gene, legend=TRUE, legendPos="bottom")

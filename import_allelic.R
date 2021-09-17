@@ -15,20 +15,13 @@ edb <- ah[["AH89211"]]
 txps <- transcripts(edb, return.type="DataFrame")
 tx2gene <- txps[,c("tx_id","gene_id")]
 
-# this should be taken care of inside importAllelicCounts()
-refalt <- rep(c("ref","alt"), each=nrow(tx2gene))
-tx2gene_big <- data.frame(
-  tx=paste0(rep(tx2gene[,1], 2), "_", refalt),
-  gene=paste0(rep(tx2gene[,2], 2), "_", refalt)
-)
-
-library(fishpond)
+#library(fishpond)
+devtools::load_all("../fishpond/fishpond")
 library(SummarizedExperiment)
 
 gse <- importAllelicCounts(
-  coldata, a1="alt", a2="ref",
-  format="wide",
-  tx2gene=tx2gene_big, txOut=FALSE
+  coldata[1:4,], a1="alt", a2="ref",
+  format="wide", tx2gene=tx2gene
 )
 keep <- rowSums(assay(gse) >= 10) >= 6
 table(keep)
