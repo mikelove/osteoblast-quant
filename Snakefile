@@ -8,8 +8,11 @@ ANNO = "/proj/milovelab/anno"
 
 DICT = {"129":"129S1_SvImJ", "CAST":"CAST_EiJ"}
 
+#rule all:
+#    input: "multiqc/multiqc_report.html"
+
 rule all:
-    input: "multiqc/multiqc_report.html"
+     input: expand("quants/{run}/quant.sf", run=RUNS)
 
 rule salmon_index:
     input: "{ANNO}/Mus_musculus.GRCm38.v102.fa.gz"
@@ -40,7 +43,7 @@ rule salmon_quant_diploid:
         index = lambda wcs: DICT[wcs.strain]
     shell:
         "{SALMON} quant -i diploid_txomes/indices/{params.index} -l A -p 12 "
-        "--numGibbsSamples 20 --thinningFactor 100 "
+        "--numGibbsSamples 30 --thinningFactor 500 "
         "-o {params.dir} -1 {input.r1} -2 {input.r2}"
 
 rule fastqc:
