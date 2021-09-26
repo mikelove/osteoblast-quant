@@ -3,12 +3,20 @@ library(fishpond)
 load("data/gse_filtered.rda")
 load("data/gse_filtered_collapsed.rda")
 
+y <- gse_coll
+y <- gse
+
 # the sample table
-colData(gse_coll)
+colData(y)
 
 # one cross at a time
-y <- gse_coll[,gse_coll$cross == "129xB6"]
-y <- gse[,gse$cross == "129xB6"]
+y <- y[,y$cross == "129xB6"]
+
+library(ggplot2)
+gene <- "Cped1"
+ensgene <- rownames(y)[which(mcols(y)$symbol == gene)]
+getTrace(y, idx=ensgene, samp_idx=c("129xB6-2-1-a2","129xB6-2-1-a1")) %>%
+  ggplot(aes(infRep, count, col=sample)) + geom_point() + geom_line()
 
 # this is needed for plotting
 y <- computeInfRV(y)
