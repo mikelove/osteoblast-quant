@@ -20,7 +20,7 @@ devtools::load_all("../fishpond/fishpond")
 library(SummarizedExperiment)
 
 gse <- importAllelicCounts(
-  coldata[1:4,], a1="alt", a2="ref",
+  coldata, a1="alt", a2="ref",
   format="wide", tx2gene=tx2gene
 )
 keep <- rowSums(assay(gse) >= 10) >= 6
@@ -33,7 +33,7 @@ save(gse, file="data/gse_filtered.rda")
 # collapse technical replicates
 idx <- 1:36 * 3
 gse_coll <- gse[,idx]
-for (a in c("counts",paste0("infRep",1:20))) {
+for (a in c("counts",paste0("infRep",1:30))) {
   cat(a,"")
   assay(gse_coll,a) <- assay(gse,a)[,idx] +
     assay(gse,a)[,idx-1] + assay(gse,a)[,idx-2]
