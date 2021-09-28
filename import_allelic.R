@@ -1,5 +1,6 @@
-samples <- list.files("quants")
-files <- file.path("quants", samples, "quant.sf")
+dir <- "boot_quants"
+samples <- list.files(dir)
+files <- file.path(dir, samples, "quant.sf")
 cross <- factor(rep(c("129xB6","CASTxB6"),each=27))
 day <- rep(rep(1:9 * 2, each=3), times=2)
 rep <- rep(1:3, times=18)
@@ -43,6 +44,7 @@ for (a in c("abundance","length")) {
   assay(gse_coll,a) <- (assay(gse,a)[,idx] +
     assay(gse,a)[,idx-1] + assay(gse,a)[,idx-2])/3
 }
+colnames(gse_coll) <- sub("^(.*-.*)-.*-(a.)$","\\1-\\2",colnames(gse_coll))
 save(gse_coll, file="data/gse_filtered_collapsed.rda")
 
 library(DESeq2)
