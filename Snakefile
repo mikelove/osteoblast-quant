@@ -59,7 +59,7 @@ rule salmon_quant_diploid_boot:
         index = lambda wcs: DICT[wcs.strain]
     shell:
         "{SALMON} quant -i diploid_txomes/indices/{params.index} -l A -p 12 "
-        "--numBootstraps 30 "
+        "--numBootstraps 30 --dumpEq "
         "-o {params.dir} -1 {input.r1} -2 {input.r2}"
 
 rule fastqc:
