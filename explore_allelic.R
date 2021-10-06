@@ -1,10 +1,10 @@
 library(SummarizedExperiment)
 devtools::load_all("../fishpond/fishpond")
-load("data/gse_filtered.rda")
+#load("data/gse_filtered.rda")
 load("data/gse_filtered_collapsed.rda")
 
 y <- gse_coll
-y <- gse
+#y <- gse
 
 # the sample table
 colData(y)
