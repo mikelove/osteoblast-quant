@@ -1,4 +1,5 @@
 dir <- "boot_quants"
+dir <- "old_quants"
 samples <- list.files(dir)
 files <- file.path(dir, samples, "quant.sf")
 cross <- factor(rep(c("129xB6","CASTxB6"),each=27))
@@ -29,12 +30,15 @@ table(keep)
 gse <- gse[keep,]
 library(org.Mm.eg.db)
 mcols(gse)$symbol <- mapIds(org.Mm.eg.db, rownames(gse), "SYMBOL", "ENSEMBL")
-save(gse, file="data/gse_filtered.rda")
+#save(gse, file="data/gse_filtered.rda")
+save(gse, file="old_data/gse_filtered.rda")
 
 # collapse technical replicates
 idx <- 1:36 * 3
 gse_coll <- gse[,idx]
-for (a in c("counts",paste0("infRep",1:30))) {
+#nrep <- 30
+nrep <- 20
+for (a in c("counts",paste0("infRep",1:nrep))) {
   cat(a,"")
   assay(gse_coll,a) <- assay(gse,a)[,idx] +
     assay(gse,a)[,idx-1] + assay(gse,a)[,idx-2]
@@ -45,7 +49,8 @@ for (a in c("abundance","length")) {
     assay(gse,a)[,idx-1] + assay(gse,a)[,idx-2])/3
 }
 colnames(gse_coll) <- sub("^(.*-.*)-.*-(a.)$","\\1-\\2",colnames(gse_coll))
-save(gse_coll, file="data/gse_filtered_collapsed.rda")
+#save(gse_coll, file="data/gse_filtered_collapsed.rda")
+save(gse_coll, file="old_data/gse_filtered_collapsed.rda")
 
 library(DESeq2)
 gse_coll$fday <- factor(gse_coll$day)
