@@ -97,12 +97,15 @@ dds <- DESeqDataSet(tot, ~cross + day.scale)
 # correct for sequencing depth
 dds <- estimateSizeFactors(dds)
 
+# the corrections are here
+normalizationFactors(dds)[1:3,1:5]
+
 # change rownames to gene symbols, if we have one
 rownames(dds) <- ifelse(is.na(mcols(dds)$symbol),
                         rownames(dds),
                         mcols(dds)$symbol)
 
-# these are now scaled counts
+# now plotting scaled counts:
 gene <- "Runx2"
 dat <- plotCounts(dds, gene, intgroup=c("cross","day"), returnData=TRUE)
 ggplot(dat, aes(day, count, col=cross)) +
@@ -126,3 +129,17 @@ assay(vsd)["Runx2",1:5]
 plotPCA(vsd, intgroup="day")
 plotPCA(vsd, intgroup="cross") +
   scale_colour_brewer(palette = "Dark2")
+
+############################################################
+
+# alternatively, forget about gene lengths, and just
+# do simple scaling per sample.
+# Note: I don't recommend this, I think the above is a better approach
+dds2 <- dds
+assays(dds2) <- assays(dds2)[1] # throw out abundance and length info
+dds2 <- estimateSizeFactors(dds2)
+sizeFactors(dds2) # the size factors
+# size factors here capturing the deviation from middle total count
+plot(colSums(counts(dds2))/1e6,
+     sizeFactors(dds2), xlim=c(0,50), ylim=c(0,2))
+abline(h=1, v=median(colSums(counts(dds2))/1e6,), lty=2)
