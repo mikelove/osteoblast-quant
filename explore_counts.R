@@ -88,3 +88,41 @@ ggplot(dat, aes(day, seq_depth, color=cross)) +
 # I can explain this more on a call, but it helps to prevent mistaking
 # splicing changes as differential 'gene' expression
 # (e.g. changes to the total output of gene)
+
+# use DESeq2 scaling
+library(DESeq2)
+tot$day.scale <- (tot$day - 10) / 8
+dds <- DESeqDataSet(tot, ~cross + day.scale)
+
+# correct for sequencing depth
+dds <- estimateSizeFactors(dds)
+
+# change rownames to gene symbols, if we have one
+rownames(dds) <- ifelse(is.na(mcols(dds)$symbol),
+                        rownames(dds),
+                        mcols(dds)$symbol)
+
+# these are now scaled counts
+gene <- "Runx2"
+dat <- plotCounts(dds, gene, intgroup=c("cross","day"), returnData=TRUE)
+ggplot(dat, aes(day, count, col=cross)) +
+  geom_point(size=2) + geom_line() + 
+  scale_colour_brewer(palette = "Dark2") +
+  ylim(0, 1.1 * max(dat$count)) + ggtitle(gene)
+
+# scaled counts are here
+counts(dds, normalized=TRUE)["Runx2",1:5]
+
+# log transformed scaled counts for heatmap / sample distance / PCA
+vsd <- vst(dds, blind=FALSE)
+library(pheatmap)
+pheatmap(assay(vsd)[c("Runx2","Sparc","Col1a1"),],
+         scale="row", cluster_cols=FALSE)
+
+# log transformed scaled counts are here
+assay(vsd)["Runx2",1:5]
+
+# PCA plots
+plotPCA(vsd, intgroup="day")
+plotPCA(vsd, intgroup="cross") +
+  scale_colour_brewer(palette = "Dark2")
