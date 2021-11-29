@@ -46,27 +46,31 @@ mcols(y)["Runx2",] # not global AI
 # dynamic AI test
 y <- swish(y, x="allele", pair="day", cov="day", cor="pearson")
 
+# try dynamic AI for up/down pattern
+plot(y$day[1:9])
+y$day.sq <- (y$day - 10)^2
+plot(y$day.sq[1:9])
+y$day.sin <- sin((y$day - 2) / 16 * (2 * pi))
+plot(y$day.sin[1:9])
+
+y <- swish(y, x="allele", pair="day", cov="day.sq", cor="pearson")
+y <- swish(y, x="allele", pair="day", cov="day.sin", cor="pearson")
+
 hist(mcols(y)$stat)
 plot(mcols(y)$stat, -log10(mcols(y)$pvalue))
 hist(mcols(y)$pvalue)
 
 with(mcols(y), plot(stat, log2FC, ylim=c(-1,1)))
 abline(h=0, col="red")
-with(mcols(y), identify(stat, log2FC))
+#with(mcols(y), identify(stat, log2FC))
 
 # worth looking at these
-with(mcols(y), which.max(log2FC * as.numeric(qvalue < .05))) # 3111
-with(mcols(y), which.min(log2FC * as.numeric(qvalue < .05))) # 495
+with(mcols(y), which.max(stat))
+with(mcols(y), which.min(stat))
 
-gene <- "Msx2"
-mcols(y)[gene,]
-plotInfReps(y, gene, x="day", cov="allele")
-# symbol      keep meanInfRV  someInfo log10mean       stat    log2FC    pvalue    locfdr    qvalue
-# <character> <logical> <numeric> <logical> <numeric>  <numeric> <numeric> <numeric> <numeric> <numeric>
-#   Msx2        Msx2      TRUE   4.11872      TRUE   3.01567 0.00780183  0.603582  0.640518         1  0.653212
+head(mcols(y)[order(mcols(y)$pvalue),],10)
 
-plotInfReps(y, 3111, x="day", cov="allele")
-plotInfReps(y, 495, x="day", cov="allele")
+plotInfReps(y, "Stc1", x="day", cov="allele")
 
 dat <- data.frame(count=assay(y)["Msx2",], allele=y$allele, day=y$day)
 library(ggplot2)
