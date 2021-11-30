@@ -1,13 +1,14 @@
 library(SummarizedExperiment)
-devtools::load_all("../fishpond/fishpond")
-load("data/gse_filtered_collapsed.rda")
+devtools::load_all("../../fishpond/fishpond")
+#load("data/gse_filtered_collapsed.rda")
+load("test_Gnas.rda")
 y <- gse_coll
 
 # the sample table
 colData(y)
 
 # one cross at a time
-y <- y[,y$cross == "129xB6"]
+y <- y[,y$cross == "CASTxB6"]
 y <- labelKeep(y)
 table(mcols(y)$keep) # already filtered, so not many left
 y <- y[mcols(y)$keep,]

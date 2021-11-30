@@ -66,8 +66,8 @@ save(gse, file="data/gse_filtered.rda")
 # collapse technical replicates
 idx <- 1:36 * 3
 gse_coll <- gse[,idx]
-#nrep <- 30
-nrep <- 20
+# get num reps from assayNames
+nrep <- as.numeric(sub("infRep","",tail(grep("infRep",assayNames(gse),value=TRUE),1)))
 for (a in c("counts",paste0("infRep",1:nrep))) {
   cat(a,"")
   assay(gse_coll,a) <- assay(gse,a)[,idx] +
