@@ -9,7 +9,7 @@ names <- paste0(cross, "-", day, "-", rep)
 coldata <- data.frame(cross, day, files, names)
 
 #library(fishpond)
-devtools::load_all("../fishpond/fishpond")
+devtools::load_all("../../fishpond/fishpond")
 library(SummarizedExperiment)
 
 library(AnnotationHub)
@@ -20,8 +20,6 @@ edb <- ah[["AH89211"]]
 
 txps <- transcripts(edb, return.type="DataFrame")
 tx2gene <- txps[,c("tx_id","gene_id")]
-
-# attempt sub-gene resolution `Gnas` gene
 
 isoform <- FALSE
 if (isoform) {
