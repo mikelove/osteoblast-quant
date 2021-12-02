@@ -4,11 +4,30 @@ SALMON = "/proj/milovelab/bin/salmon-1.5.2_linux_x86_64/bin/salmon"
 
 rule all:
     input:
-        expand("indices/{strain}/pos.bin", strain=config["strain"])
+        expand("snps/{strain}.merged.vcf.gz", strain=config["strain"])
+#        expand("indices/{strain}/pos.bin", strain=config["strain"])
+
+rule combine_vcf:
+    input:
+        snp = "snps/{file}.mgp.v5.snps.dbSNP142.vcf.gz",
+        indel = "snps/{file}.mgp.v5.indels.dbSNP142.normed.vcf.gz"
+    params: 
+        unsort = "snps/{file}.unsort.vcf",
+        unzip = "snps/{file}.merged.vcf"
+    output: "snps/{file}.merged.vcf.gz"
+    shell: 
+        """
+        gunzip -c {input.snp} > {params.unsort}
+        zcat {input.indel} | sed /^#/d >> {params.unsort}
+        bcftools sort -m 3G {params.unsort} > {params.unzip}
+        rm -f {params.unsort}
+        bgzip {params.unzip}
+        tabix -p vcf {output}
+        """
 
 rule vcf2vci:
     input: 
-        vcf = "snps/{file}.mgp.v5.indels.dbSNP142.normed.vcf.gz",
+        vcf = "snps/{file}.merged.vcf.gz",
         fasta = "fasta/Mus_musculus.GRCm38.dna.primary_assembly_bgzip.fa.gz"
     output: "snps/{file}.vci.gz"
     params: 
