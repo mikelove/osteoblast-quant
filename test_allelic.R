@@ -1,8 +1,9 @@
 library(SummarizedExperiment)
 devtools::load_all("../../fishpond/fishpond")
 #load("data/gse_filtered_collapsed.rda")
-load("test_Gnas.rda")
-y <- gse_coll
+load("data/se_filtered_collapsed.rda")
+#load("test_Gnas.rda")
+y <- se_coll
 
 # the sample table
 colData(y)
@@ -14,8 +15,14 @@ table(mcols(y)$keep) # already filtered, so not many left
 y <- y[mcols(y)$keep,]
 
 # prefer symbols if we have them
-symOrEns <- ifelse(is.na(mcols(y)$symbol), rownames(y), mcols(y)$symbol)
-rownames(y) <- symOrEns
+gene <- FALSE
+if (gene) {
+  symOrEns <- ifelse(is.na(mcols(y)$symbol), rownames(y), mcols(y)$symbol)
+  rownames(y) <- symOrEns
+} else {
+  symOrEns <- ifelse(is.na(mcols(y)$symbol), mcols(y)$gene, mcols(y)$symbol)
+  rownames(y) <- paste0(symOrEns,"-",rownames(y))
+}
 
 # assess the InfRV
 y <- computeInfRV(y)
@@ -41,6 +48,7 @@ with(mcols(y), which.max(log2FC * as.numeric(qvalue < .05)))
 with(mcols(y), which.min(log2FC * as.numeric(qvalue < .05)))
 
 gene <- "Runx2"
+gene <- "Gnas-ENSMUST00000109096"
 plotInfReps(y, gene, x="day", cov="allele")
 mcols(y)["Runx2",] # not global AI
 
