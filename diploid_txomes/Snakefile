@@ -4,8 +4,7 @@ SALMON = "/proj/milovelab/bin/salmon-1.5.2_linux_x86_64/bin/salmon"
 
 rule all:
     input:
-        expand("snps/{strain}.merged.vcf.gz", strain=config["strain"])
-#        expand("indices/{strain}/pos.bin", strain=config["strain"])
+        expand("indices/{strain}/pos.bin", strain=config["strain"])
 
 rule combine_vcf:
     input:
@@ -33,7 +32,7 @@ rule vcf2vci:
     params: 
         vci = "snps/{file}.vci"
     shell: 
-        "g2gtools vcf2vci -p 8 -i {input.vcf} -o {params.vci} "
+        "g2gtools vcf2vci -p 12 -i {input.vcf} -o {params.vci} "
         "-s {wildcards.file} -f {input.fasta}"
 
 rule patch:
@@ -42,7 +41,7 @@ rule patch:
         fasta = "fasta/Mus_musculus.GRCm38.dna.primary_assembly_bgzip.fa.gz"
     output: "fasta/{file}.patched.fa"
     shell:
-        "g2gtools patch -p 8 -i {input.fasta} -c {input.vci} -o {output}"
+        "g2gtools patch -p 12 -i {input.fasta} -c {input.vci} -o {output}"
 
 rule transform:
     input:
@@ -50,7 +49,7 @@ rule transform:
         fasta = "fasta/{file}.patched.fa"
     output: "fasta/{file}.trans.fa"
     shell:
-        "g2gtools transform -p 8 -i {input.fasta} -c {input.vci} -o {output}"
+        "g2gtools transform -p 12 -i {input.fasta} -c {input.vci} -o {output}"
 
 rule convert:
     input:
@@ -97,4 +96,4 @@ rule index_diploid_fasta:
     output: "indices/{file}/pos.bin"
     params:
         dir = "indices/{file}"
-    shell: "{SALMON} index -p 8 -t {input} -i {params.dir} --keepDuplicates"
+    shell: "{SALMON} index -p 12 -t {input} -i {params.dir} --keepDuplicates"
