@@ -8,13 +8,10 @@ ANNO = "/proj/milovelab/anno"
 
 DICT = {"129":"129S1_SvImJ", "CAST":"CAST_EiJ"}
 
-#rule all:
-#    input: "multiqc/multiqc_report.html"
-
-DIRS = ["quants","boot_quants"]
-
 rule all:
-     input: expand("{dir}/{run}/quant.sf", run=RUNS, dir=DIRS)
+     input: 
+#        qc = "multiqc/multiqc_report.html"
+        boot = expand("{dir}/{run}/quant.sf", run=RUNS)
 
 rule salmon_index:
     input: "{ANNO}/Mus_musculus.GRCm38.v102.fa.gz"
@@ -42,20 +39,6 @@ rule salmon_quant_diploid:
         "quants/{strain}xB6_{sample}/quant.sf"
     params:
         dir = "quants/{strain}xB6_{sample}",
-        index = lambda wcs: DICT[wcs.strain]
-    shell:
-        "{SALMON} quant -i diploid_txomes/indices/{params.index} -l A -p 12 "
-        "--numGibbsSamples 30 --thinningFactor 1000 "
-        "-o {params.dir} -1 {input.r1} -2 {input.r2}"
-
-rule salmon_quant_diploid_boot:
-    input:
-        r1 = "fastq/{strain}xB6_{sample}_R1_ALL.fastq.gz",
-        r2 = "fastq/{strain}xB6_{sample}_R2_ALL.fastq.gz"
-    output:
-        "boot_quants/{strain}xB6_{sample}/quant.sf"
-    params:
-        dir = "boot_quants/{strain}xB6_{sample}",
         index = lambda wcs: DICT[wcs.strain]
     shell:
         "{SALMON} quant -i diploid_txomes/indices/{params.index} -l A -p 12 "

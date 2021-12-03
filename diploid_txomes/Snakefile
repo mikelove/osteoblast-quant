@@ -4,7 +4,8 @@ SALMON = "/proj/milovelab/bin/salmon-1.5.2_linux_x86_64/bin/salmon"
 
 rule all:
     input:
-        expand("indices/{strain}/pos.bin", strain=config["strain"])
+        salmon = expand("indices/{strain}/pos.bin", strain=config["strain"]),
+        hisat = expand("ht2_indices/{strain}/genome.1.ht2", strain=config["strain"])
 
 rule combine_vcf:
     input:
@@ -97,3 +98,35 @@ rule index_diploid_fasta:
     params:
         dir = "indices/{file}"
     shell: "{SALMON} index -p 12 -t {input} -i {params.dir} --keepDuplicates"
+
+rule hisat_extract:
+    input: 
+        fasta = "fasta/Mus_musculus.GRCm38.dna.primary_assembly.fa",
+        vcf = "snps/{file}.merged.vcf.gz"
+    output: 
+        snp = "snps/{file}.snp",
+        haplotype = "snps/{file}.haplotype"
+    params:
+        base = "snps/{file}"
+    shell: 
+        "hisat2_extract_snps_haplotypes_VCF.py --non-rs "
+        "{input.fasta} {input.vcf} {params.base} 2> /dev/null"
+
+rule hisat_ss:
+    input: "genes/Mus_musculus.GRCm38.102.gtf"
+    output: "genes/Mus_musculus.GRCm38.102.ss"
+    shell:
+        "hisat2_extract_splice_sites.py {input} > {output}"
+
+rule hisat_index:
+    input: 
+        fasta = "fasta/Mus_musculus.GRCm38.dna.primary_assembly.fa",
+        snp = "snps/{file}.snp",
+        haplotype = "snps/{file}.haplotype",
+        ss = "genes/Mus_musculus.GRCm38.102.ss"
+    params:
+        base = "ht2_indices/{file}/genome"
+    output: "ht2_indices/{file}/genome.1.ht2"
+    shell:
+        "hisat2-build-s -p 12 -f --snp {input.snp} --haplotype {input.haplotype} "
+        "--ss {input.ss} {input.fasta} {params.base}"
