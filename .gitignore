@@ -3,6 +3,7 @@ diploid_txomes
 ensembl_txomes
 fastq
 genes
+ht2_align
 multiqc
 qc
 quants
