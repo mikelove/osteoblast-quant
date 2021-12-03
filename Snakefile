@@ -1,6 +1,4 @@
-RUNS, = glob_wildcards("fastq/{run}_R1_ALL.fastq.gz")
-
-READS = ["R1", "R2"]
+configfile: "config.json"
 
 SALMON = "/proj/milovelab/bin/salmon-1.5.2_linux_x86_64/bin/salmon"
 
@@ -8,33 +6,36 @@ ANNO = "/proj/milovelab/anno"
 
 DICT = {"129":"129S1_SvImJ", "CAST":"CAST_EiJ"}
 
+RUNS, = glob_wildcards("orig_fastq/{run}_R1_ALL.fastq.gz")
+
 rule all:
      input: 
 #        qc = "multiqc/multiqc_report.html"
-        boot = expand("{dir}/{run}/quant.sf", run=RUNS)
+        ref_quants = expand("ref_quants/{run}/quant.sf", run=RUNS),
+        quants = expand("quants/{cross}_{time}/quant.sf", cross=config["crosses"], time=config["times"])
 
-rule salmon_index:
+rule salmon_index_ref:
     input: "{ANNO}/Mus_musculus.GRCm38.v102.fa.gz"
     output: directory("{ANNO}/Mus_musculus.GRCm38.v102-salmon_1.5.2")
     shell: "{SALMON} index -p 12 -t {input} -i {output}"
 
 rule salmon_quant_ref:
     input:
-        r1 = "fastq/{sample}_R1_ALL.fastq.gz",
-        r2 = "fastq/{sample}_R2_ALL.fastq.gz",
+        r1 = "orig_fastq/{run}_R1_ALL.fastq.gz",
+        r2 = "orig_fastq/{run}_R2_ALL.fastq.gz",
         index = "/proj/milovelab/anno/Mus_musculus.GRCm38.v102-salmon_1.5.2"
     output:
-        "ref_quants/{sample}/quant.sf"
+        "ref_quants/{run}/quant.sf"
     params:
-        dir = "ref_quants/{sample}"
+        dir = "ref_quants/{run}"
     shell:
         "{SALMON} quant -i {input.index} -l A -p 12 "
         "-o {params.dir} -1 {input.r1} -2 {input.r2}"
 
 rule salmon_quant_diploid:
     input:
-        r1 = "fastq/{strain}xB6_{sample}_R1_ALL.fastq.gz",
-        r2 = "fastq/{strain}xB6_{sample}_R2_ALL.fastq.gz"
+        r1 = expand("fastq/{{strain}}xB6_{{sample}}_{lane}_R1.fastq.gz", lane=config["lanes"]),
+        r2 = expand("fastq/{{strain}}xB6_{{sample}}_{lane}_R2.fastq.gz", lane=config["lanes"])
     output:
         "quants/{strain}xB6_{sample}/quant.sf"
     params:
@@ -47,11 +48,11 @@ rule salmon_quant_diploid:
 
 rule fastqc:
     input:
-        "fastq/{sample}_ALL.fastq.gz"
+        "orig_fastq/{run}_ALL.fastq.gz"
     output:
-        "qc/{sample}/{sample}_ALL_fastqc.html"
+        "qc/{sample}/{run}_ALL_fastqc.html"
     params:
-        dir = "qc/{sample}"
+        dir = "qc/{run}"
     shell:
         "fastqc --quiet -t 12 --outdir {params.dir} {input}"
 
@@ -60,7 +61,7 @@ rule multiqc:
         expand(["ref_quants/{run}/quant.sf",
                 "quants/{run}/quant.sf",
                 "qc/{run}_{read}/{run}_{read}_ALL_fastqc.html"],
-               run=RUNS, read=READS)
+               run=RUNS, read=config["reads"])
     output:
         "multiqc/multiqc_report.html"
     shell:
