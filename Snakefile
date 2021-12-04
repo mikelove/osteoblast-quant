@@ -10,10 +10,10 @@ RUNS, = glob_wildcards("orig_fastq/{run}_R1_ALL.fastq.gz")
 
 rule all:
      input: 
-#        qc = "multiqc/multiqc_report.html"
-#        ref_quants = expand("ref_quants/{run}/quant.sf", run=RUNS),
-#        quants = expand("quants/{cross}_{time}/quant.sf", cross=config["crosses"], time=config["times"])
-        hisat = expand("ht2_align/{cross}_{time}.bam", cross=config["crosses"], time=config["times"])
+        ref_quants = expand("ref_quants/{run}/quant.sf", run=RUNS),
+        quants = expand("quants/{cross}_{time}/quant.sf", cross=config["crosses"], time=config["times"]),
+        hisat = expand("ht2_align/{cross}_{time}.summary", cross=config["crosses"], time=config["times"]),
+        qc = "multiqc/multiqc_report.html"
 
 rule salmon_index_ref:
     input: "{ANNO}/Mus_musculus.GRCm38.v102.fa.gz"
@@ -60,13 +60,15 @@ rule fastqc:
 rule multiqc:
     input:
         expand(["ref_quants/{run}/quant.sf",
-                "quants/{run}/quant.sf",
+                "quants/{cross}_{time}/quant.sf",
+                "ht2_align/{cross}_{time}.bam",
                 "qc/{run}_{read}/{run}_{read}_ALL_fastqc.html"],
-               run=RUNS, read=config["reads"])
+                run=RUNS, read=config["reads"], 
+                cross=config["crosses"], time=config["times"])
     output:
         "multiqc/multiqc_report.html"
     shell:
-        "multiqc . -o multiqc"
+        "multiqc -f -o multiqc quants/ ht2_align/ ref_quants/ qc/"
 
 rule hisat:
     input:
@@ -74,7 +76,8 @@ rule hisat:
         r1 = expand("fastq/{{sample}}_{lane}_R1.fastq.gz", lane=config["lanes"]),
         r2 = expand("fastq/{{sample}}_{lane}_R2.fastq.gz", lane=config["lanes"])
     output:
-        "ht2_align/{sample}.bam"
+        align = "ht2_align/{sample}.bam",
+        summary = "ht2_align/{sample}.summary"
     params:
         xdir = "anno/grcm38_snp/genome_snp",
         temp_sam = "ht2_align/{sample}.unfilt.sam",
@@ -84,8 +87,10 @@ rule hisat:
         r2comma = lambda wildcards, input: ",".join(input.r2)
     shell:
         """
-        hisat2 -p {params.threads} -x {params.xdir} -1 {params.r1comma} -2 {params.r2comma} > {params.temp_sam}
-        samtools view -b -q 60 {params.temp_sam} | samtools sort -@ {params.threads} -m {params.mem} -o {output}
-        samtools index {output}
+        hisat2 -p {params.threads} -x {params.xdir} \
+          --summary-file {output.summary} --new-summary \
+          -1 {params.r1comma} -2 {params.r2comma} > {params.temp_sam}
+        samtools view -b -q 60 {params.temp_sam} | samtools sort -@ {params.threads} -m {params.mem} -o {output.align}
+        samtools index {output.align}
         rm -f {params.temp_sam}
         """
