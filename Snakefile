@@ -8,14 +8,15 @@ DICT = {"129":"129S1_SvImJ", "CAST":"CAST_EiJ"}
 
 RUNS, = glob_wildcards("orig_fastq/{run}_R1_ALL.fastq.gz")
 
+MAPPING = "python3.5 /nas/longleaf/apps/wasp/2019-12/WASP/mapping"
+
 rule all:
      input: 
         # ref_quants = expand("ref_quants/{run}/quant.sf", run=RUNS),
         # quants = expand("quants/{cross}_{time}/quant.sf", cross=config["crosses"], time=config["times"]),
         # hisat = expand("ht2_align/{cross}_{time}.summary", cross=config["crosses"], time=config["times"]),
         # qc = "multiqc/multiqc_report.html",
-        wasp = expand("wasp_data/{cross}_genoprob.h5", cross=config["crosses"])
-    
+        wasp = expand("wasp_mapping/{cross}_{time}.keep.actual.bam", cross=config["crosses"], time=config["times"])
 
 rule salmon_index_ref:
     input: "{ANNO}/Mus_musculus.GRCm38.v102.fa.gz"
@@ -128,26 +129,34 @@ rule wasp_snp2h5:
         "--snp_tab {output.tab} --haplotype {output.hap} "
         "wasp_data/{params.base}_*.vcf.gz "
 
-# rule find_intersecting_snps:
-#     input: 
-#         bam = "ht2_align/{sample}.bam",
-#         index = "data/{strain}_snp_index.h5",
-#         tab = "data/{strain}_snp_tab.h5",
-#         hap = "data/{strain}_haps.h5"
-#     output: 
-#         keep = "wasp_mapping/{sample}.keep.bam",
-#         remap_bam = "wasp_mapping/{sample}.to.remap.bam",
-#         remap_fq1 = "wasp_mapping/{sample}.remap.fq1.gz",
-#         remap_fq2 = "wasp_mapping/{sample}.remap.fq2.gz"
-#     shell:
-#         """
-#         {MAPPING}/find_intersecting_snps.py \
-#           --is_paired_end \
-#           --is_sorted \
-#           --output_dir wasp_mapping \
-#           --snp_tab {input.tab} \
-#           --snp_index {input.index} \
-#           --haplotype {input.hap} \
-#           --samples data/samples \
-#           {input.bam}
-#         """
+rule find_intersecting_snps:
+    input: 
+        bam = "ht2_align/{strain}xB6_{time}.bam",
+        index = "wasp_data/{strain}xB6_snp_index.h5",
+        tab = "wasp_data/{strain}xB6_snp_tab.h5",
+        hap = "wasp_data/{strain}xB6_haps.h5"
+    params:
+        keep_tmp = "wasp_mapping/{strain}xB6_{time}.keep.bam",
+        remap_tmp = "wasp_mapping/{strain}xB6_{time}.to.remap.bam",
+        longstrain = lambda wcs: DICT[wcs.strain]
+    output: 
+        keep = "wasp_mapping/{strain}xB6_{time}.keep.actual.bam",
+        remap_bam = "wasp_mapping/{strain}xB6_{time}.to.remap.actual.bam",
+        remap_fq1 = "wasp_mapping/{strain}xB6_{time}.remap.fq1.gz",
+        remap_fq2 = "wasp_mapping/{strain}xB6_{time}.remap.fq2.gz"
+    shell:
+        """
+        {MAPPING}/find_intersecting_snps.py \
+          --is_paired_end \
+          --is_sorted \
+          --output_dir wasp_mapping \
+          --snp_tab {input.tab} \
+          --snp_index {input.index} \
+          --haplotype {input.hap} \
+          --samples {params.longstrain} \
+          {input.bam}
+        samtools view -b {params.keep_tmp} > {output.keep}
+        samtools view -b {params.remap_tmp} > {output.remap_bam}
+        rm -f {params.keep_tmp}
+        rm -f {params.remap_tmp}
+        """

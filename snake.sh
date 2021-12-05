@@ -9,4 +9,4 @@
 module load python
 module load wasp
 module load samtools
-snakemake -j 2 --latency-wait 30 --cluster "sbatch -n 1 --mem=15000 --time=1200"
+snakemake -j 1 --latency-wait 30 --cluster "sbatch -n 1 --mem=15000 --time=1200"
