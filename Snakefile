@@ -108,7 +108,7 @@ rule split_vcfs:
     shell:
         """
         while IFS= read -r line; do
-          tabix {input} $line > {params.base}_$line.vcf;
+          tabix -h {input} $line > {params.base}_$line.vcf;
           bgzip {params.base}_$line.vcf;
         done < wasp_data/chroms.txt
         """
