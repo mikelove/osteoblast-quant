@@ -10,6 +10,7 @@ quants
 ref_quants
 old
 orig_fastq
+wasp_data
 *.Rout
 *.out
 *.rda

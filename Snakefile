@@ -10,10 +10,12 @@ RUNS, = glob_wildcards("orig_fastq/{run}_R1_ALL.fastq.gz")
 
 rule all:
      input: 
-        ref_quants = expand("ref_quants/{run}/quant.sf", run=RUNS),
-        quants = expand("quants/{cross}_{time}/quant.sf", cross=config["crosses"], time=config["times"]),
-        hisat = expand("ht2_align/{cross}_{time}.summary", cross=config["crosses"], time=config["times"]),
-        qc = "multiqc/multiqc_report.html"
+        # ref_quants = expand("ref_quants/{run}/quant.sf", run=RUNS),
+        # quants = expand("quants/{cross}_{time}/quant.sf", cross=config["crosses"], time=config["times"]),
+        # hisat = expand("ht2_align/{cross}_{time}.summary", cross=config["crosses"], time=config["times"]),
+        # qc = "multiqc/multiqc_report.html",
+        wasp = expand("wasp_data/{cross}_genoprob.h5", cross=config["crosses"])
+    
 
 rule salmon_index_ref:
     input: "{ANNO}/Mus_musculus.GRCm38.v102.fa.gz"
@@ -94,3 +96,58 @@ rule hisat:
         samtools index {output.align}
         rm -f {params.temp_sam}
         """
+
+def strain_to_vcf(wildcards):
+    return "diploid_txomes/snps/"+DICT[wildcards.strain]+".merged.vcf.gz"
+
+rule split_vcfs:
+    input: strain_to_vcf
+    output: "wasp_data/{strain}xB6_1.vcf.gz"
+    params: 
+        base = "wasp_data/{strain}xB6"
+    shell:
+        """
+        while IFS= read -r line; do
+          tabix {input} $line > {params.base}_$line.vcf;
+          bgzip {params.base}_$line.vcf;
+        done < wasp_data/chroms.txt
+        """
+
+rule wasp_snp2h5:
+    input: "wasp_data/{cross}_1.vcf.gz"
+    output:
+        genoprob = "wasp_data/{cross}_genoprob.h5",
+        index = "wasp_data/{cross}_snp_index.h5",
+        tab = "wasp_data/{cross}_snp_tab.h5",
+        hap = "wasp_data/{cross}_haps.h5"
+    params:
+        base = "{cross}"
+    shell:
+        "snp2h5 --chrom wasp_data/chromInfo.txt --format vcf "
+        "--geno_prob {output.genoprob} --snp_index {output.index} "
+        "--snp_tab {output.tab} --haplotype {output.hap} "
+        "wasp_data/{params.base}_*.vcf.gz "
+
+# rule find_intersecting_snps:
+#     input: 
+#         bam = "ht2_align/{sample}.bam",
+#         index = "data/{strain}_snp_index.h5",
+#         tab = "data/{strain}_snp_tab.h5",
+#         hap = "data/{strain}_haps.h5"
+#     output: 
+#         keep = "wasp_mapping/{sample}.keep.bam",
+#         remap_bam = "wasp_mapping/{sample}.to.remap.bam",
+#         remap_fq1 = "wasp_mapping/{sample}.remap.fq1.gz",
+#         remap_fq2 = "wasp_mapping/{sample}.remap.fq2.gz"
+#     shell:
+#         """
+#         {MAPPING}/find_intersecting_snps.py \
+#           --is_paired_end \
+#           --is_sorted \
+#           --output_dir wasp_mapping \
+#           --snp_tab {input.tab} \
+#           --snp_index {input.index} \
+#           --haplotype {input.hap} \
+#           --samples data/samples \
+#           {input.bam}
+#         """
