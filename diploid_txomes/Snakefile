@@ -5,44 +5,31 @@ SALMON = "/proj/milovelab/bin/salmon-1.5.2_linux_x86_64/bin/salmon"
 rule all:
     input:
         salmon = expand("indices/{strain}/pos.bin", strain=config["strain"]),
-        hisat = expand("ht2_indices/{strain}/genome.1.ht2", strain=config["strain"])
-
-rule combine_vcf:
-    input:
-        snp = "snps/{file}.mgp.v5.snps.dbSNP142.vcf.gz",
-        indel = "snps/{file}.mgp.v5.indels.dbSNP142.normed.vcf.gz"
-    params: 
-        unsort = "snps/{file}.unsort.vcf",
-        unzip = "snps/{file}.merged.vcf"
-    output: "snps/{file}.merged.vcf.gz"
-    shell: 
-        """
-        gunzip -c {input.snp} > {params.unsort}
-        zcat {input.indel} | sed /^#/d >> {params.unsort}
-        bcftools sort -m 3G {params.unsort} > {params.unzip}
-        rm -f {params.unsort}
-        bgzip {params.unzip}
-        tabix -p vcf {output}
-        """
+        txps = expand("txps/{strain}.transcripts.fa", strain=config["strain"])
 
 rule vcf2vci:
     input: 
-        vcf = "snps/{file}.merged.vcf.gz",
+        snp = "snps/{file}.mgp.v5.snps.dbSNP142.vcf.gz",
+        indel = "snps/{file}.mgp.v5.indels.dbSNP142.normed.vcf.gz",
         fasta = "fasta/Mus_musculus.GRCm38.dna.primary_assembly_bgzip.fa.gz"
     output: "snps/{file}.vci.gz"
     params: 
         vci = "snps/{file}.vci"
     shell: 
-        "g2gtools vcf2vci -p 12 -i {input.vcf} -o {params.vci} "
-        "-s {wildcards.file} -f {input.fasta}"
+        """
+        g2gtools vcf2vci -p 12 -i {input.snp} -i {input.indel} -o {params.vci} \
+          -s {wildcards.file} -f {input.fasta} --pass --quality
+        """
 
 rule patch:
     input:
         vci = "snps/{file}.vci.gz",
         fasta = "fasta/Mus_musculus.GRCm38.dna.primary_assembly_bgzip.fa.gz"
-    output: "fasta/{file}.patched.fa"
+    output:
+        fa = "fasta/{file}.patched.fa",
+        log = "fasta/{file}.patched.log"
     shell:
-        "g2gtools patch -p 12 -i {input.fasta} -c {input.vci} -o {output}"
+        "g2gtools patch -p 12 -i {input.fasta} -c {input.vci} -o {output.fa} 2> {output.log}"
 
 rule transform:
     input:
@@ -56,12 +43,12 @@ rule convert:
     input:
         vci = "snps/{file}.vci.gz",
         gtf = "genes/Mus_musculus.GRCm38.102.gtf",
-    output: "genes/{file}.gtf"
+    output: "genes/{file}.converted.gtf"
     shell:
         "g2gtools convert -i {input.gtf} -c {input.vci} -o {output}"
 
 rule db:
-    input: "genes/{file}.gtf"
+    input: "genes/{file}.converted.gtf"
     output: "genes/{file}.db"
     shell:
         "g2gtools gtf2db -i {input} -o {output}"

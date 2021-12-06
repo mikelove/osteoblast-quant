@@ -1,11 +1,9 @@
-dir <- "boot_quants"
-#dir <- "old_quants"
+dir <- "quants"
 samples <- list.files(dir)
 files <- file.path(dir, samples, "quant.sf")
-cross <- factor(rep(c("129xB6","CASTxB6"),each=27))
-day <- rep(rep(1:9 * 2, each=3), times=2)
-rep <- rep(1:3, times=18)
-names <- paste0(cross, "-", day, "-", rep)
+cross <- factor(rep(c("129xB6","CASTxB6"),each=9))
+day <- rep(rep(1:9 * 2), times=2)
+names <- paste0(cross, "-d", ifelse(day < 10, paste0("0", day), day))
 coldata <- data.frame(cross, day, files, names)
 
 #library(fishpond)
@@ -33,22 +31,7 @@ if (isoform) {
   library(org.Mm.eg.db)
   mcols(se)$gene <- tx2gene[match(rownames(se), tx2gene[,1]),2]
   mcols(se)$symbol <- mapIds(org.Mm.eg.db, mcols(se)$gene, "SYMBOL", "ENSEMBL")
-  # collapse technical replicates
-  idx <- 1:36 * 3
-  se_coll <- se[,idx]
-  nrep <- 30
-  for (a in c("counts",paste0("infRep",1:nrep))) {
-    cat(a,"")
-    assay(se_coll,a) <- assay(se,a)[,idx] +
-      assay(se,a)[,idx-1] + assay(se,a)[,idx-2]
-  }
-  for (a in c("abundance","length")) {
-    cat(a,"")
-    assay(se_coll,a) <- (assay(se,a)[,idx] +
-                          assay(se,a)[,idx-1] + assay(se,a)[,idx-2])/3
-  }
-  colnames(se_coll) <- sub("^(.*-.*)-.*-(a.)$","\\1-\\2",colnames(se_coll))
-  save(se_coll, file="data/se_filtered_collapsed.rda")
+  save(se, file="data/se_filtered.rda")
 }
 
 gse <- importAllelicCounts(
@@ -61,26 +44,8 @@ gse <- gse[keep,]
 library(org.Mm.eg.db)
 mcols(gse)$symbol <- mapIds(org.Mm.eg.db, rownames(gse), "SYMBOL", "ENSEMBL")
 save(gse, file="data/gse_filtered.rda")
-#save(gse, file="old_data/gse_filtered.rda")
 
-# collapse technical replicates
-idx <- 1:36 * 3
-gse_coll <- gse[,idx]
-# get num reps from assayNames
-nrep <- as.numeric(sub("infRep","",tail(grep("infRep",assayNames(gse),value=TRUE),1)))
-for (a in c("counts",paste0("infRep",1:nrep))) {
-  cat(a,"")
-  assay(gse_coll,a) <- assay(gse,a)[,idx] +
-    assay(gse,a)[,idx-1] + assay(gse,a)[,idx-2]
-}
-for (a in c("abundance","length")) {
-  cat(a,"")
-  assay(gse_coll,a) <- (assay(gse,a)[,idx] +
-    assay(gse,a)[,idx-1] + assay(gse,a)[,idx-2])/3
-}
-colnames(gse_coll) <- sub("^(.*-.*)-.*-(a.)$","\\1-\\2",colnames(gse_coll))
-#save(gse_coll, file="data/gse_filtered_collapsed.rda")
-save(gse_coll, file="old_data/gse_filtered_collapsed.rda")
+###
 
 library(DESeq2)
 gse_coll$fday <- factor(gse_coll$day)

@@ -15,8 +15,15 @@ stopifnot(all.equal(names(cdna[[1]]), names(cdna[[2]])))
 # re-order and subset the reference (some missing from g2gtools output)
 cdna[[ref]] <- cdna[[ref]][names(cdna[[1]])]
 
-# check equal:
+# check equal names:
 stopifnot(all.equal(names(cdna[[1]]), names(cdna[[ref]])))
+
+# check seqs not equal
+for (i in 1:nstrains) {
+  cat(i)
+  stopifnot(!all(cdna[[i]] == cdna[[ref]]))
+  table(cdna[[i]] != cdna[[ref]])
+}
 
 # now add a ref and strain ('alt') indicator on the txp names
 names(cdna[[ref]]) <- paste0(names(cdna[[ref]]), "_ref")

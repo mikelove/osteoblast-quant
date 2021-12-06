@@ -16,7 +16,7 @@ rule all:
         # quants = expand("quants/{cross}_{time}/quant.sf", cross=config["crosses"], time=config["times"]),
         # hisat = expand("ht2_align/{cross}_{time}.summary", cross=config["crosses"], time=config["times"]),
         # qc = "multiqc/multiqc_report.html",
-        wasp = expand("wasp_mapping/{cross}_{time}.keep.actual.bam", cross=config["crosses"], time=config["times"])
+        wasp = expand("wasp_mapping/{cross}_{time}.merge.bam", cross=config["crosses"], time=config["times"])
 
 rule salmon_index_ref:
     input: "{ANNO}/Mus_musculus.GRCm38.v102.fa.gz"
@@ -73,7 +73,7 @@ rule multiqc:
     shell:
         "multiqc -f -o multiqc quants/ ht2_align/ ref_quants/ qc/"
 
-rule hisat:
+rule hisat_align:
     input:
         index = "anno/grcm38_snp/genome_snp.1.ht2",
         r1 = expand("fastq/{{sample}}_{lane}_R1.fastq.gz", lane=config["lanes"]),
@@ -159,4 +159,49 @@ rule find_intersecting_snps:
         samtools view -b {params.remap_tmp} > {output.remap_bam}
         rm -f {params.keep_tmp}
         rm -f {params.remap_tmp}
+        """
+
+rule hisat_align_flip:
+    input:
+        index = "anno/grcm38_snp/genome_snp.1.ht2",
+        r1 = "wasp_mapping/{sample}.remap.fq1.gz",
+        r2 = "wasp_mapping/{sample}.remap.fq2.gz"
+    output: "wasp_mapping/{sample}.map2.bam"
+    params:
+        xdir = "anno/grcm38_snp/genome_snp",
+        temp_sam = "wasp_mapping/{sample}.unfilt.sam",
+        threads = "12",
+        mem = "1G"
+    shell:
+        """
+        hisat2 -p {params.threads} -x {params.xdir} \
+          -1 {input.r1} -2 {input.r2} > {params.temp_sam}
+        samtools view -b -q 60 {params.temp_sam} | samtools sort -@ {params.threads} -m {params.mem} -o {output}
+        samtools index {output}
+        rm -f {params.temp_sam}
+        """
+
+rule filter_remapped:
+    input:
+        remap_bam = "wasp_mapping/{sample}.to.remap.actual.bam",
+        map2_bam = "wasp_mapping/{sample}.map2.bam"
+    output: "wasp_mapping/{sample}.keep2.bam"
+    shell:
+        "{MAPPING}/filter_remapped_reads.py {input.remap_bam} {input.map2_bam} {output}"
+
+rule wasp_merge:
+    input:
+        keep = "wasp_mapping/{sample}.keep.actual.bam",
+        keep2 = "wasp_mapping/{sample}.keep2.bam"
+    output: "wasp_mapping/{sample}.merge.bam"
+    params:
+        presort = "wasp_mapping/{sample}.presort.bam",
+        threads = "12",
+        mem = "1G"
+    shell:
+        """
+        samtools merge -@ {params.threads} -o {params.presort} {input.keep} {input.keep2}
+        samtools sort -@ {params.threads} -m {params.mem} -o {output} {params.presort}
+        samtools index {output}
+        rm -f {params.presort}
         """

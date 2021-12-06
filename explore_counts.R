@@ -78,7 +78,7 @@ ggplot(dat, aes(day, count, color=cross)) +
 # still we probably want to scale for total expression comparisons
 dat$seq_depth <- colSums(assay(tot))/1e6
 ggplot(dat, aes(day, seq_depth, color=cross)) +
-  geom_point(size=2) + geom_line() + ylim(0,45) + 
+  geom_point(size=2) + geom_line() + ylim(0,50) + 
   scale_colour_brewer(palette = "Dark2") +
   ylab("seq depth (millions)")
   
