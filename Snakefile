@@ -13,10 +13,10 @@ MAPPING = "python3.5 /nas/longleaf/apps/wasp/2019-12/WASP/mapping"
 rule all:
      input: 
         # ref_quants = expand("ref_quants/{run}/quant.sf", run=RUNS),
-        # quants = expand("quants/{cross}_{time}/quant.sf", cross=config["crosses"], time=config["times"]),
+        # quants = expand("quants/{cross}_{time}/quant.sf", cross=config["crosses"], time=config["times"])
         # hisat = expand("ht2_align/{cross}_{time}.summary", cross=config["crosses"], time=config["times"]),
-        # qc = "multiqc/multiqc_report.html",
-        wasp = expand("wasp_mapping/{cross}_{time}.merge.bam", cross=config["crosses"], time=config["times"])
+        qc = "multiqc/multiqc_report.html"
+        #wasp = expand("wasp_mapping/{cross}_{time}.keep.actual.bam", cross=config["crosses"], time=config["times"])
 
 rule salmon_index_ref:
     input: "{ANNO}/Mus_musculus.GRCm38.v102.fa.gz"
@@ -99,7 +99,7 @@ rule hisat_align:
         """
 
 def strain_to_vcf(wildcards):
-    return "diploid_txomes/snps/"+DICT[wildcards.strain]+".merged.vcf.gz"
+    return "diploid_txomes/snps/"+DICT[wildcards.strain]+".mgp.v5.snps.dbSNP142.vcf.gz"
 
 rule split_vcfs:
     input: strain_to_vcf
@@ -122,12 +122,12 @@ rule wasp_snp2h5:
         tab = "wasp_data/{cross}_snp_tab.h5",
         hap = "wasp_data/{cross}_haps.h5"
     params:
-        base = "{cross}"
+        vcf_star = "wasp_data/{cross}_*.vcf.gz"
     shell:
         "snp2h5 --chrom wasp_data/chromInfo.txt --format vcf "
         "--geno_prob {output.genoprob} --snp_index {output.index} "
         "--snp_tab {output.tab} --haplotype {output.hap} "
-        "wasp_data/{params.base}_*.vcf.gz "
+        "{params.vcf_star}"
 
 rule find_intersecting_snps:
     input: 

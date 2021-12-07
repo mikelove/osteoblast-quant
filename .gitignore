@@ -1,4 +1,5 @@
 .snakemake
+anno
 diploid_txomes
 ensembl_txomes
 fastq
@@ -11,6 +12,7 @@ ref_quants
 old
 orig_fastq
 wasp_data
+wasp_mapping
 *.Rout
 *.out
 *.rda

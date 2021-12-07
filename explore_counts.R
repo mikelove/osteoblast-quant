@@ -59,10 +59,12 @@ dat <- as.data.frame( colData(y) )
 dat$count <- assay(y, "counts")[ensgene,]
 
 # remember, a2 = B6 in all plots
+cols <- c(a2="dodgerblue", a1="goldenrod3")
 ggplot(dat, aes(day, count, color=allele)) +
   geom_point() + geom_line() + facet_wrap(~cross) +
   ggtitle(gene) +
-  scale_colour_brewer(palette = "Set1")
+  scale_colour_manual(values=cols) +
+  guides(color = guide_legend(reverse=TRUE))
 
 # again with total count (still not scaled for seq depth)
 gene <- "Sparc"
@@ -71,15 +73,17 @@ dat <- as.data.frame( colData(tot) )
 dat$count <- assay(tot, "counts")[ensgene,]
 ggplot(dat, aes(day, count, color=cross)) +
   geom_point(size=2) + geom_line() + ggtitle(gene) +
-  scale_colour_brewer(palette = "Dark2")
+  scale_colour_manual(values=cols) +
+  guides(color = guide_legend(reverse=TRUE))
 
 # Scaling for seq depth...
 # ok, first, the above plots are not so bad, bc seq depth is fairly flat,
 # still we probably want to scale for total expression comparisons
 dat$seq_depth <- colSums(assay(tot))/1e6
 ggplot(dat, aes(day, seq_depth, color=cross)) +
-  geom_point(size=2) + geom_line() + ylim(0,50) + 
-  scale_colour_brewer(palette = "Dark2") +
+  geom_point(size=2) + geom_line() + ylim(0,50) +
+  scale_colour_manual(values=cols) +
+  guides(color = guide_legend(reverse=TRUE))
   ylab("seq depth (millions)")
   
 # Scaling: I will recommend to use the methods of `tximport`
@@ -109,8 +113,9 @@ rownames(dds) <- ifelse(is.na(mcols(dds)$symbol),
 gene <- "Runx2"
 dat <- plotCounts(dds, gene, intgroup=c("cross","day"), returnData=TRUE)
 ggplot(dat, aes(day, count, col=cross)) +
-  geom_point(size=2) + geom_line() + 
-  scale_colour_brewer(palette = "Dark2") +
+  geom_point(size=2) + geom_line() +
+  scale_colour_manual(values=cols) +
+  guides(color = guide_legend(reverse=TRUE))
   ylim(0, 1.1 * max(dat$count)) + ggtitle(gene)
 
 # scaled counts are here

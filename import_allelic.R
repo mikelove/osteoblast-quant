@@ -48,10 +48,10 @@ save(gse, file="data/gse_filtered.rda")
 ###
 
 library(DESeq2)
-gse_coll$fday <- factor(gse_coll$day)
-gse_coll2 <- gse_coll
-assays(gse_coll2) <- assays(gse_coll2)["counts"]
-dds <- DESeqDataSet(gse_coll2, ~cross + cross:fday)
+gse$fday <- factor(gse$day)
+gse2 <- gse
+assays(gse2) <- assays(gse2)["counts"]
+dds <- DESeqDataSet(gse2, ~cross + cross:fday)
 dds <- estimateSizeFactors(dds)
 sf <- sizeFactors(dds)
 plot(sf[1:18], sf[19:36]); abline(0,1)
