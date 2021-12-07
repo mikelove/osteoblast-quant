@@ -7,6 +7,5 @@
 #SBATCH --mail-type=ALL
 
 module load python
-module load wasp
 module load samtools
-snakemake -j 9 --latency-wait 30 --cluster "sbatch -n 1 --mem=15000 --time=360"
+snakemake -j 9 --latency-wait 30 --cluster "sbatch -n 12 --mem=15000 --time=360"

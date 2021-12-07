@@ -13,10 +13,10 @@ MAPPING = "python3.5 /nas/longleaf/apps/wasp/2019-12/WASP/mapping"
 rule all:
      input: 
         # ref_quants = expand("ref_quants/{run}/quant.sf", run=RUNS),
-        # quants = expand("quants/{cross}_{time}/quant.sf", cross=config["crosses"], time=config["times"])
+        # quants = expand("quants/{cross}_{time}/quant.sf", cross=config["crosses"], time=config["times"]),
         # hisat = expand("ht2_align/{cross}_{time}.summary", cross=config["crosses"], time=config["times"]),
-        qc = "multiqc/multiqc_report.html"
-        #wasp = expand("wasp_mapping/{cross}_{time}.keep.actual.bam", cross=config["crosses"], time=config["times"])
+        # qc = "multiqc/multiqc_report.html",
+        wasp = expand("wasp_mapping/{cross}_{time}.merge.bam", cross=config["crosses"], time=config["times"])
 
 rule salmon_index_ref:
     input: "{ANNO}/Mus_musculus.GRCm38.v102.fa.gz"
