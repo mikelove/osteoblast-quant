@@ -1,6 +1,6 @@
 # Exploring counts script
 # Michael Love
-# Oct 6 2021
+# Dec 6 2021
 
 # if you don't have SummarizedExperiment, install it with these 3 lines:
 if (FALSE) {
@@ -133,7 +133,8 @@ assay(vsd)["Runx2",1:5]
 # PCA plots
 plotPCA(vsd, intgroup="day")
 plotPCA(vsd, intgroup="cross") +
-  scale_colour_brewer(palette = "Dark2")
+  scale_colour_manual(values=cols) +
+  guides(color = guide_legend(reverse=TRUE))
 
 ############################################################
 
