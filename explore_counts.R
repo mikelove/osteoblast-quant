@@ -149,3 +149,29 @@ sizeFactors(dds2) # the size factors
 plot(colSums(counts(dds2))/1e6,
      sizeFactors(dds2), xlim=c(0,50), ylim=c(0,2))
 abline(h=1, v=median(colSums(counts(dds2))/1e6,), lty=2)
+
+
+#############################################################
+
+# assess the overdispersion for the simulation
+
+library(DESeq2)
+y$sample <- factor(paste0(y$cross, "_", y$day))
+dds <- DESeqDataSet(y, ~sample + allele)
+keep <- rowSums(counts(dds) >= 10) == ncol(dds)
+dds <- dds[keep,]
+dds <- estimateSizeFactors(dds)
+nrow(dds)
+system.time({
+  dds <- estimateDispersions(dds)
+})
+
+library(dplyr)
+library(ggplot2)
+dat <- mcols(dds) %>%
+  as.data.frame() %>%
+  select(baseMean, dispGeneEst)
+dat %>% filter(baseMean > 1e3, dispGeneEst > 1e-4) %>%
+  ggplot(aes(dispGeneEst)) +
+  geom_histogram(color="red",fill="mistyrose2") +
+  scale_x_log10()
