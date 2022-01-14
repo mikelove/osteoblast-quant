@@ -19,6 +19,11 @@ edb <- ah[["AH89211"]]
 txps <- transcripts(edb, return.type="DataFrame")
 tx2gene <- txps[,c("tx_id","gene_id")]
 
+tss <- FALSE
+if (tss) {
+  tx2gene$gene_id <- paste0(tx2gene$gene_id, "-", txps$tx_seq_start)
+}
+
 isoform <- FALSE
 if (isoform) {
   se <- importAllelicCounts(
@@ -42,8 +47,18 @@ keep <- rowSums(assay(gse) >= 10) >= 6
 table(keep)
 gse <- gse[keep,]
 library(org.Mm.eg.db)
-mcols(gse)$symbol <- mapIds(org.Mm.eg.db, rownames(gse), "SYMBOL", "ENSEMBL")
-save(gse, file="data/gse_filtered.rda")
+
+if (tss) {
+  # tss-level
+  mcols(gse)$gene <- sub("-.*","",rownames(gse))
+  mcols(gse)$symbol <- mapIds(org.Mm.eg.db, mcols(gse)$gene,
+                              "SYMBOL", "ENSEMBL")
+  save(gse, file="data/tss_se_filtered.rda")
+} else {
+  # normal gene-level
+  mcols(gse)$symbol <- mapIds(org.Mm.eg.db, rownames(gse), "SYMBOL", "ENSEMBL")
+  save(gse, file="data/gse_filtered.rda")
+}
 
 ###
 
