@@ -1,9 +1,9 @@
 library(SummarizedExperiment)
 devtools::load_all("../../fishpond/fishpond")
-#load("data/gse_filtered_collapsed.rda")
-load("data/se_filtered_collapsed.rda")
-#load("test_Gnas.rda")
-y <- se_coll
+load("data/gse_filtered.rda")
+#load("data/se_filtered.rda")
+load("data/tss_se_filtered.rda")
+y <- gse
 
 # the sample table
 colData(y)
@@ -16,9 +16,15 @@ y <- y[mcols(y)$keep,]
 
 # prefer symbols if we have them
 gene <- FALSE
+tss <- FALSE
 if (gene) {
+  mcols(y)$gene <- rownames(y)
   symOrEns <- ifelse(is.na(mcols(y)$symbol), rownames(y), mcols(y)$symbol)
   rownames(y) <- symOrEns
+} else if (tss) {
+  symOrEns <- ifelse(is.na(mcols(y)$symbol), mcols(y)$gene, mcols(y)$symbol)
+  tss <- sapply(strsplit(rownames(y), "-"), `[`, 2)
+  rownames(y) <- paste0(symOrEns,"-",tss)
 } else {
   symOrEns <- ifelse(is.na(mcols(y)$symbol), mcols(y)$gene, mcols(y)$symbol)
   rownames(y) <- paste0(symOrEns,"-",rownames(y))
@@ -37,23 +43,23 @@ boxplot(log10(mcols(y)$meanInfRV + .001) ~ mcols(y)$someInfo)
 y <- y[mcols(y)$someInfo,]
 
 # no scaling, because we are comparing alleles within samples
-y <- swish(y, x="allele", pair="day")
+y <- swish(y, x="allele", cov="day", pair="day", cor="pearson")
 
 hist(mcols(y)$pvalue)
 
-plotMASwish(y)
-
 # worth looking at these
-with(mcols(y), which.max(log2FC * as.numeric(qvalue < .05)))
-with(mcols(y), which.min(log2FC * as.numeric(qvalue < .05)))
+with(mcols(y), which.max(stat))
+with(mcols(y), which.min(stat))
 
-gene <- "Runx2"
-gene <- "Gnas-ENSMUST00000109096"
-plotInfReps(y, gene, x="day", cov="allele")
-mcols(y)["Runx2",] # not global AI
+plotInfReps(y, 5953, x="day", cov="allele", shiftX=.15)
+plotInfReps(y, 16127, x="day", cov="allele", shiftX=.15)
+plotInfReps(y, 32850, x="day", cov="allele", shiftX=.15)
 
-# dynamic AI test
-y <- swish(y, x="allele", pair="day", cov="day", cor="pearson")
+library(tibble)
+tss <- mcols(y) %>% as.data.frame() %>% rownames_to_column("id") %>% tibble()
+save(tss, file="tss.rda")
+gene <- mcols(y) %>% as.data.frame() %>% rownames_to_column("id") %>% tibble()
+save(gene, file="gene.rda")
 
 # try dynamic AI for up/down pattern
 plot(y$day[1:9])
