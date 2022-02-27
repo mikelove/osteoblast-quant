@@ -16,32 +16,45 @@ ah <- AnnotationHub()
 #query(ah, c("EnsDb","102","Mus musculus"))
 edb <- ah[["AH89211"]]
 
-txps <- transcripts(edb, return.type="DataFrame")
-tx2gene <- txps[,c("tx_id","gene_id")]
+# new fishpond code for importing allelic with GRanges
+#txps <- transcripts(edb, return.type="DataFrame")
+#tx2gene <- txps[,c("tx_id","gene_id")]
+
+txps <- transcripts(edb)
+
+library(plyranges)
 
 tss <- FALSE
+isoform <- FALSE
 if (tss) {
-  tx2gene$gene_id <- paste0(tx2gene$gene_id, "-", txps$tx_seq_start)
+  #tx2gene$gene_id <- paste0(tx2gene$gene_id, "-", txps$tx_seq_start)
+  txps <- txps %>%
+    select(tx_id, gene_id) %>%
+    mutate(group_id = paste0(gene_id, "-", ifelse(strand=="+",start,end)))
+} else if (isoform) {
+  txps <- txps %>%
+    select(tx_id, gene_id)
+} else {
+  txps <- txps %>%
+    select(tx_id, group_id=gene_id)
 }
 
-isoform <- FALSE
 if (isoform) {
   se <- importAllelicCounts(
     coldata, a1="alt", a2="ref", format="wide"
   )
+  rowRanges(se) <- txps[rownames(se)]
   keep <- rowSums(assay(se) >= 10) >= 6
   table(keep)
   se <- se[keep,]
-  all(rownames(se) %in% tx2gene[,1])
   library(org.Mm.eg.db)
-  mcols(se)$gene <- tx2gene[match(rownames(se), tx2gene[,1]),2]
-  mcols(se)$symbol <- mapIds(org.Mm.eg.db, mcols(se)$gene, "SYMBOL", "ENSEMBL")
+  mcols(se)$symbol <- mapIds(org.Mm.eg.db, mcols(se)$gene_id, "SYMBOL", "ENSEMBL")
   save(se, file="data/se_filtered.rda")
 }
 
 gse <- importAllelicCounts(
   coldata, a1="alt", a2="ref",
-  format="wide", tx2gene=tx2gene
+  format="wide", tx2gene=txps,
 )
 keep <- rowSums(assay(gse) >= 10) >= 6
 table(keep)
@@ -50,8 +63,7 @@ library(org.Mm.eg.db)
 
 if (tss) {
   # tss-level
-  mcols(gse)$gene <- sub("-.*","",rownames(gse))
-  mcols(gse)$symbol <- mapIds(org.Mm.eg.db, mcols(gse)$gene,
+  mcols(gse)$symbol <- mapIds(org.Mm.eg.db, mcols(gse)$gene_id,
                               "SYMBOL", "ENSEMBL")
   save(gse, file="data/tss_se_filtered.rda")
 } else {
