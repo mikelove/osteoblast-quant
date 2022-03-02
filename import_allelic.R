@@ -28,13 +28,13 @@ tss <- FALSE
 isoform <- FALSE
 if (tss) {
   #tx2gene$gene_id <- paste0(tx2gene$gene_id, "-", txps$tx_seq_start)
-  txps <- txps %>%
-    select(tx_id, gene_id) %>%
-    mutate(group_id = paste0(gene_id, "-", ifelse(strand=="+",start,end)))
+  txps <- makeTx2Tss(edb) %>%
+    select(tx_id, gene_id, group_id)
 } else if (isoform) {
   txps <- txps %>%
     select(tx_id, gene_id)
 } else {
+  # gene-level
   txps <- txps %>%
     select(tx_id, group_id=gene_id)
 }
