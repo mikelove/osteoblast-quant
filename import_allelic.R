@@ -7,7 +7,7 @@ names <- paste0(cross, "-d", ifelse(day < 10, paste0("0", day), day))
 coldata <- data.frame(cross, day, files, names)
 
 #library(fishpond)
-devtools::load_all("../../fishpond/fishpond")
+devtools::load_all("../../fishpond/github/fishpond")
 library(SummarizedExperiment)
 
 library(AnnotationHub)
@@ -25,11 +25,15 @@ txps <- transcripts(edb)
 library(plyranges)
 
 tss <- FALSE
+fuzzy_tss <- FALSE
 isoform <- FALSE
 if (tss) {
   #tx2gene$gene_id <- paste0(tx2gene$gene_id, "-", txps$tx_seq_start)
   txps <- makeTx2Tss(edb) %>%
     select(tx_id, gene_id, group_id)
+} else if (fuzzy_tss) {
+  txps <- makeTx2Tss(edb, maxgap=50) %>%
+    select(tx_id, gene_id, group_id, tss)
 } else if (isoform) {
   txps <- txps %>%
     select(tx_id, gene_id)
@@ -61,11 +65,15 @@ table(keep)
 gse <- gse[keep,]
 library(org.Mm.eg.db)
 
-if (tss) {
+if (tss | fuzzy_tss) {
   # tss-level
   mcols(gse)$symbol <- mapIds(org.Mm.eg.db, mcols(gse)$gene_id,
                               "SYMBOL", "ENSEMBL")
-  save(gse, file="data/tss_se_filtered.rda")
+  if (tss) {
+    save(gse, file="data/tss_se_filtered.rda")
+  } else {
+    save(gse, file="data/fuzzy_50bp_tss_se_filtered.rda")
+  }
 } else {
   # normal gene-level
   mcols(gse)$symbol <- mapIds(org.Mm.eg.db, rownames(gse), "SYMBOL", "ENSEMBL")
