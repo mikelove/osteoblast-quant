@@ -1,8 +1,9 @@
 library(SummarizedExperiment)
 devtools::load_all("../../fishpond/fishpond")
-load("data/gse_filtered.rda")
+#load("data/gse_filtered.rda")
 #load("data/se_filtered.rda")
-load("data/tss_se_filtered.rda")
+#load("data/tss_se_filtered.rda")
+load("data/fuzzy_50bp_tss_se_filtered.rda")
 y <- gse
 
 # the sample table

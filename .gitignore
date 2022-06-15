@@ -3,6 +3,7 @@ anno
 diploid_txomes
 ensembl_txomes
 fastq
+fastq_b6
 genes
 ht2_align
 multiqc

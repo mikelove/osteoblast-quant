@@ -13,10 +13,11 @@ MAPPING = "python3.5 /nas/longleaf/apps/wasp/2019-12/WASP/mapping"
 rule all:
      input: 
         # ref_quants = expand("ref_quants/{run}/quant.sf", run=RUNS),
+        ref_quants_b6 = expand("ref_quants_b6/{time}/quant.sf", time=config["times"])
         # quants = expand("quants/{cross}_{time}/quant.sf", cross=config["crosses"], time=config["times"]),
         # hisat = expand("ht2_align/{cross}_{time}.summary", cross=config["crosses"], time=config["times"]),
         # qc = "multiqc/multiqc_report.html",
-        wasp = expand("wasp_mapping/{cross}_{time}.merge.bam", cross=config["crosses"], time=config["times"])
+        # wasp = expand("wasp_mapping/{cross}_{time}.merge.bam", cross=config["crosses"], time=config["times"])
 
 rule salmon_index_ref:
     input: "{ANNO}/Mus_musculus.GRCm38.v102.fa.gz"
@@ -35,6 +36,18 @@ rule salmon_quant_ref:
     shell:
         "{SALMON} quant -i {input.index} -l A -p 12 "
         "-o {params.dir} -1 {input.r1} -2 {input.r2}"
+
+rule salmon_quant_b6:
+    input:
+        read = "fastq_b6/{run}.fastq.gz",
+        index = "/proj/milovelab/anno/Mus_musculus.GRCm38.v102-salmon_1.5.2"
+    output:
+        "ref_quants_b6/{run}/quant.sf"
+    params:
+        dir = "ref_quants_b6/{run}"
+    shell:
+        "{SALMON} quant -i {input.index} -l A -p 12 "
+        "-o {params.dir} -r {input.read}"
 
 rule salmon_quant_diploid:
     input:
