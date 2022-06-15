@@ -10,6 +10,7 @@ multiqc
 qc
 quants
 ref_quants
+ref_quants_b6
 old
 orig_fastq
 wasp_data
