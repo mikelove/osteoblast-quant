@@ -13,7 +13,7 @@ MAPPING = "python3.5 /nas/longleaf/apps/wasp/2019-12/WASP/mapping"
 rule all:
      input: 
         # ref_quants = expand("ref_quants/{run}/quant.sf", run=RUNS),
-        ref_quants_b6 = expand("ref_quants_b6/{time}/quant.sf", time=config["times"])
+        ref_quants_b6 = expand("ref_quants_b6/B6_{time}/quant.sf", time=config["times"])
         # quants = expand("quants/{cross}_{time}/quant.sf", cross=config["crosses"], time=config["times"]),
         # hisat = expand("ht2_align/{cross}_{time}.summary", cross=config["crosses"], time=config["times"]),
         # qc = "multiqc/multiqc_report.html",
