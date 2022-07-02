@@ -7,7 +7,7 @@ names <- paste0(cross, "-d", ifelse(day < 10, paste0("0", day), day))
 coldata <- data.frame(cross, day, files, names)
 
 #library(fishpond)
-devtools::load_all("../../fishpond/github/fishpond")
+devtools::load_all("../../fishpond/fishpond")
 library(SummarizedExperiment)
 
 library(AnnotationHub)
@@ -21,6 +21,7 @@ edb <- ah[["AH89211"]]
 #tx2gene <- txps[,c("tx_id","gene_id")]
 
 txps <- transcripts(edb)
+g <- genes(edb)
 
 library(plyranges)
 
@@ -76,7 +77,8 @@ if (tss | fuzzy_tss) {
   }
 } else {
   # normal gene-level
-  mcols(gse)$symbol <- mapIds(org.Mm.eg.db, rownames(gse), "SYMBOL", "ENSEMBL")
+  rowRanges(gse) <- g[rownames(gse)]
+  # mcols(gse)$symbol <- mapIds(org.Mm.eg.db, rownames(gse), "SYMBOL", "ENSEMBL")
   save(gse, file="data/gse_filtered.rda")
 }
 
