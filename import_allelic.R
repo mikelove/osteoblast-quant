@@ -26,14 +26,21 @@ library(plyranges)
 library(org.Mm.eg.db)
 
 # increasing levels of aggregation
-isoform <- FALSE
-tss <- FALSE
-fuzzy_tss <- FALSE
 for (iter in 1:4) {
-  # 1 = gene, others are here:
-  if (iter == 2) isoform <- TRUE
-  if (iter == 3) tss <- TRUE
-  if (iter == 4) fuzzy_tss <- TRUE
+  # iter 1 = gene
+  isoform <- FALSE
+  tss <- FALSE
+  fuzzy_tss <- FALSE
+  # other types of output are here:
+  if (iter == 2) {
+    isoform <- TRUE; tss <- FALSE; fuzzy_tss <- FALSE
+  }
+  if (iter == 3) {
+    tss <- TRUE; isoform <- FALSE; fuzzy_tss <- FALSE
+  }
+  if (iter == 4) {
+    fuzzy_tss <- TRUE; isoform <- FALSE; tss <- FALSE
+  }
   if (tss) {
     #tx2gene$gene_id <- paste0(tx2gene$gene_id, "-", txps$tx_seq_start)
     txps <- makeTx2Tss(edb) %>%
@@ -49,6 +56,7 @@ for (iter in 1:4) {
     txps <- transcripts(edb) %>%
       select(tx_id, group_id=gene_id)
   }
+  # import and save
   if (isoform) {
     se <- importAllelicCounts(
       coldata, a1="alt", a2="ref", format="wide"
@@ -60,28 +68,28 @@ for (iter in 1:4) {
     mcols(se)$symbol <- mapIds(org.Mm.eg.db, mcols(se)$gene_id,
                                "SYMBOL", "ENSEMBL")
     save(se, file="data/se_filtered.rda")
-  }
-
-  gse <- importAllelicCounts(
-    coldata, a1="alt", a2="ref",
-    format="wide", tx2gene=txps)
-  keep <- rowSums(assay(gse) >= 10) >= 6
-  table(keep)
-  gse <- gse[keep,]
-  if (tss | fuzzy_tss) {
-    # tss-level
-    mcols(gse)$symbol <- mapIds(org.Mm.eg.db, mcols(gse)$gene_id,
-                                "SYMBOL", "ENSEMBL")
-    if (tss) {
-      save(gse, file="data/tss_se_filtered.rda")
-    } else {
-      save(gse, file="data/fuzzy_50bp_tss_se_filtered.rda")
-    }
   } else {
-    # normal gene-level
-    rowRanges(gse) <- g[rownames(gse)]
-    # mcols(gse)$symbol <- mapIds(org.Mm.eg.db, rownames(gse), "SYMBOL", "ENSEMBL")
-    save(gse, file="data/gse_filtered.rda")
+    gse <- importAllelicCounts(
+      coldata, a1="alt", a2="ref",
+      format="wide", tx2gene=txps)
+    keep <- rowSums(assay(gse) >= 10) >= 6
+    table(keep)
+    gse <- gse[keep,]
+    if (tss | fuzzy_tss) {
+      # tss-level
+      mcols(gse)$symbol <- mapIds(org.Mm.eg.db, mcols(gse)$gene_id,
+                                  "SYMBOL", "ENSEMBL")
+      if (tss) {
+        save(gse, file="data/tss_se_filtered.rda")
+      } else {
+        save(gse, file="data/fuzzy_50bp_tss_se_filtered.rda")
+      }
+    } else {
+      # normal gene-level
+      rowRanges(gse) <- g[rownames(gse)]
+      # mcols(gse)$symbol <- mapIds(org.Mm.eg.db, rownames(gse), "SYMBOL", "ENSEMBL")
+      save(gse, file="data/gse_filtered.rda")
+    }
   }
 }
 
