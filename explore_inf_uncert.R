@@ -10,15 +10,15 @@ y <- gse_coll
 colData(y)
 
 # one cross at a time
-y <- y[,y$cross == "129xB6"]
+y <- y[,y$cross == "B6x129"]
 
 library(ggplot2)
 gene <- "Cped1"
 ensgene <- rownames(y)[which(mcols(y)$symbol == gene)]
-getTrace(y, idx=ensgene, samp_idx=c("129xB6-14-a2","129xB6-14-a1")) %>%
+getTrace(y, idx=ensgene, samp_idx=c("B6x129-14-a2","B6x129-14-a1")) %>%
   ggplot(aes(infRep, count, col=sample)) + geom_point() + geom_line() + ylim(0,5000)
 
-getTrace(y, idx=8684, samp_idx=c("129xB6-14-a2","129xB6-14-a1")) %>% ggplot(aes(infRep, count, col=sample)) + geom_point() + geom_line()
+getTrace(y, idx=8684, samp_idx=c("B6x129-14-a2","B6x129-14-a1")) %>% ggplot(aes(infRep, count, col=sample)) + geom_point() + geom_line()
 
 # this is needed for plotting
 y <- computeInfRV(y)

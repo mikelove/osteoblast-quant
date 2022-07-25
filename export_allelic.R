@@ -4,7 +4,7 @@ load("data/gse_filtered.rda")
 y <- gse
 assays(y) <- assays(y)[1:3] # drop inf reps
 summary(colSums(assay(y))/1e6)
-nsamp <- 18 # 129xB6 + CASTxB6 together
+nsamp <- 18 # B6x129 + B6xCAST together
 tot <- y[,1:nsamp]
 # add the two alleles
 idx <- (nsamp+1):(2*nsamp)

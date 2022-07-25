@@ -20,7 +20,7 @@ load("data/total_counts.rda")
 
 # In the data, the B6 allelic count is first, then the other strain is next
 # e.g. it looks like the following matrices stuck together (9 samples each)
-# [129xB6 B6 counts, CASTxB6 B6 counts, 129xB6 129 counts, CASTxB6 CAST counts]
+# [B6x129 B6 counts, B6xCAST B6 counts, B6x129 129 counts, B6xCAST CAST counts]
 
 # the metadata for the allelic data
 colData(y)
